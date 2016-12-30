@@ -1,19 +1,21 @@
 #!/bin/bash
 
+
+# -----------------------------------------------------------------------------
+# -- CONFIGURATION
+# -----------------------------------------------------------------------------
+
 # -- web projects base path
 BASEPATH=$HOME/atinfo/www
 
-# -- output format
-FORMAT="%-50s"
+# -- suffix for the deployement site
+DEPLOYSUFFIX="-deploy"
 
-# -- run as normal user
-RUNASUSER="sudo -u $(logname)"
+# -- printf output format
+FORMAT="%-50s"
 
 # -- timestamp for archive name
 TIMESTAMP=`date +%Y%m%d_%H%M%S`
-
-# -- archive name
-ARCHIVE=timetm-$TIMESTAMP.tgz
 
 
 #
@@ -24,16 +26,56 @@ then
     echo -e "\n  usage : $0 project\n"
     exit 1
 else
-    PROJECTPATH=$BASEPATH/$1
-    if [ ! -r  $PROJECTPATH ];
+    if [ ! -r  $BASEPATH/$1 ];
     then
         echo -e "\n  ERROR : project $1 not found or not readable in $PROJECTPATH !\n"
         exit 1
-    else
-        PROJECTNAME=$1
-        DEPLOYTPATH=$PROJECTPATH-deploy/htdocs
     fi
 fi
+
+
+# -----------------------------------------------------------------------------
+# -- VARIABLES
+# -----------------------------------------------------------------------------
+
+# -- store project name
+PROJECTNAME=$1
+
+# -- create project path
+PROJECTPATH=$BASEPATH/$PROJECTNAME
+
+# -- create deployment path
+DEPLOYTPATH=$PROJECTPATH$DEPLOYSUFFIX/htdocs
+
+# -- archive name
+ARCHIVE=$PROJECTNAME-$TIMESTAMP.tgz
+
+# -- run as normal user
+RUNASUSER="sudo -u $(logname)"
+
+
+# -----------------------------------------------------------------------------
+# -- FUNCTIONS
+# -----------------------------------------------------------------------------
+function create_db {
+
+    printf $FORMAT "  delete db ..."
+    $RUNASUSER app/console doctrine:database:drop --force 1>/dev/null
+    echo done
+
+    printf $FORMAT "  create db ..."
+    $RUNASUSER app/console doctrine:database:create 1>/dev/null
+    echo done
+
+    printf $FORMAT "  create schema ..."
+    $RUNASUSER app/console doctrine:schema:create 1>/dev/null
+    echo done
+
+    printf $FORMAT "  loading fixtures ..."
+    $RUNASUSER app/console doctrine:fixtures:load --no-interaction --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Dev/ 1>/dev/null
+    echo done
+}
+
 
 #
 #  -- check if root --
@@ -44,15 +86,16 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 
-#
-# -- start --------------------------------------------------------------------
-#
+# -----------------------------------------------------------------------------
+# -- CREATE RELEASE
+# -----------------------------------------------------------------------------
 echo -e "\ncreating $PROJECTNAME release\n"
 
 #
 #  -- cd into project folder --
 #
 cd $PROJECTPATH
+
 
 #
 #  -- create build, copy files and cd build -----------------------------------
@@ -67,6 +110,7 @@ printf $FORMAT "  copy htdocs into build ..."
 $RUNASUSER cp -r htdocs/* build
 echo done
 
+
 #
 #  -- run doctrine commands from htdocs ---------------------------------------
 #
@@ -76,25 +120,7 @@ printf $FORMAT "  cd into htdocs ..."
 cd htdocs
 echo done
 
-printf $FORMAT "  delete db ..."
-$RUNASUSER app/console doctrine:database:drop --force 1>/dev/null
-echo done
-
-printf $FORMAT "  create db ..."
-$RUNASUSER app/console doctrine:database:create 1>/dev/null
-echo done
-
-printf $FORMAT "  create schema ..."
-$RUNASUSER app/console doctrine:schema:create 1>/dev/null
-echo done
-
-printf $FORMAT "  loading fixtures ..."
-$RUNASUSER app/console doctrine:fixtures:load --no-interaction --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Dev/ 1>/dev/null
-echo done
-
-
-
-
+create_db
 
 
 #
@@ -120,7 +146,7 @@ echo done
 
 
 #
-#  -- cd build, delete parameters.yml, create archive
+#  -- delete parameters.yml, create archive
 #
 #  -- PATH : $PROJECTPATH/build
 #
@@ -135,6 +161,7 @@ echo done
 printf $FORMAT "  creating archive ..."
 $RUNASUSER tar cfz ../$ARCHIVE *
 echo done
+
 
 #
 #  -- cleaning ----------------------------------------------------------------
@@ -152,9 +179,17 @@ echo done
 echo -e "\ndone \n\n"
 
 
-echo -e "\ntesting project release\n"
+# -----------------------------------------------------------------------------
+# -- TESTING RELEASE
+# -----------------------------------------------------------------------------
+echo -e "testing $PROJECTNAME release\n"
 
 
+#
+#  -- cleaning deployment site, copy archive ----------------------------------
+#
+#  -- PATH : $PROJECTPATH
+#
 printf $FORMAT "  clean deploy site ..."
 rm -rf $DEPLOYTPATH/*
 echo done
@@ -167,6 +202,12 @@ printf $FORMAT "  cd to deploy site ..."
 cd $DEPLOYTPATH
 echo done
 
+
+#
+#  -- extract archive, set permissions ----------------------------------------
+#
+#  -- PATH : $DEPLOYTPATH
+#
 printf $FORMAT "  extract archive ..."
 tar xfz $ARCHIVE
 echo done
@@ -176,7 +217,11 @@ chmod -R 777 app/cache app/logs
 echo done
 
 
-
+#
+#  -- copy parameters.yml, set deploy db --------------------------------------
+#
+#  -- PATH : $DEPLOYTPATH
+#
 printf $FORMAT "  copy parameters.yml ..."
 cp $PROJECTPATH/htdocs/app/config/parameters.yml app/config/
 echo done
@@ -186,24 +231,22 @@ $RUNASUSER sed -i 's/timetm/timetm-deploy/' app/config/parameters.yml
 echo done
 
 
-printf $FORMAT "  delete db ..."
-$RUNASUSER app/console doctrine:database:drop --force 1>/dev/null
-echo done
+#
+#  -- run doctrine commands in deployment site --------------------------------
+#
+#  -- PATH : $DEPLOYTPATH
+#
+create_db
 
-printf $FORMAT "  create db ..."
-$RUNASUSER app/console doctrine:database:create 1>/dev/null
-echo done
 
-printf $FORMAT "  create schema ..."
-$RUNASUSER app/console doctrine:schema:create 1>/dev/null
-echo done
-
-printf $FORMAT "  loading fixtures ..."
-$RUNASUSER app/console doctrine:fixtures:load --no-interaction --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Tests/ 1>/dev/null
-echo done
-
-echo "  running tests : "
+#
+#  -- run phpunit tests --------------------------------
+#
+#  -- PATH : $DEPLOYTPATH
+#
+echo -e "  running tests :\n"
 phpunit -c app/
 echo "  testing done"
+
 
 # -- end
