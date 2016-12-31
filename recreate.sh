@@ -4,9 +4,8 @@
 # -- CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# -- web projects base path
-BASEPATH=$HOME/atinfo/www
-
+# -- get BASEPATH
+source ./config.cfg
 
 #
 # -- check if argument, check if project folder exist -------------------------
@@ -60,9 +59,9 @@ app/console doctrine:schema:create 1>/dev/null
 echo done
 
 
-echo -n "  loading fixtures ... "
+echo -e "  loading fixtures ... \n"
 app/console -n doctrine:fixtures:load --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Dev/
-echo done
+echo -e "\n  done"
 
 
 echo -e "\ndone \n"
