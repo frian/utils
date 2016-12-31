@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # -----------------------------------------------------------------------------
 # -- CONFIGURATION
 # -----------------------------------------------------------------------------
@@ -28,7 +27,7 @@ then
 else
     if [ ! -r  $BASEPATH/$1 ];
     then
-        echo -e "\n  ERROR : project $1 not found or not readable in $PROJECTPATH !\n"
+        echo -e "\n  ERROR : project $1 not found or not readable in $BASEPATH/$1 !\n"
         exit 1
     fi
 fi
@@ -72,7 +71,7 @@ function create_db {
     echo done
 
     printf $FORMAT "  loading fixtures ..."
-    $RUNASUSER app/console doctrine:fixtures:load --no-interaction --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Dev/ 1>/dev/null
+    $RUNASUSER app/console doctrine:fixtures:load --no-interaction --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Release 1>/dev/null
     echo done
 }
 
