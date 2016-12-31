@@ -4,8 +4,8 @@
 # -- CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# -- web projects base path
-BASEPATH=$HOME/atinfo/www
+# -- get BASEPATH
+source ./config.cfg
 
 # -- suffix for the deployement site
 DEPLOYSUFFIX="-deploy"
