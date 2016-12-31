@@ -7,12 +7,17 @@
 # -- get BASEPATH
 source ./config.cfg
 
+
+# -- environment : Dev, Tests, Release
+ENV=Dev
+
+
 #
 # -- check if argument, check if project folder exist -------------------------
 #
 if [ ! $1 ];
 then
-    echo -e "\n  usage : $0 project\n"
+    echo -e "\n  usage : $0 project [Dev|Tests|Release]\n"
     exit 1
 else
     if [ ! -r  $BASEPATH/$1 ];
@@ -20,6 +25,14 @@ else
         echo -e "\n  ERROR : project $1 not found or not readable in $BASEPATH/$1 !\n"
         exit 1
     fi
+fi
+
+if [[ $2 == "Tests" || $2 == "Release" || $2 == "Dev" ]];
+then
+    ENV=$2
+else
+    echo -e "\n  ERROR : wrong parameter $2 !\n"
+    exit 1
 fi
 
 
@@ -60,7 +73,7 @@ echo done
 
 
 echo -e "  loading fixtures ... \n"
-app/console -n doctrine:fixtures:load --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/Dev/
+app/console -n doctrine:fixtures:load --fixtures=src/TimeTM/CoreBundle/DataFixtures/ORM/$ENV/
 echo -e "\n  done"
 
 
