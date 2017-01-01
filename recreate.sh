@@ -41,13 +41,21 @@ else
     fi
 fi
 
-if [[ $2 == "Tests" || $2 == "Release" || $2 == "Dev" ]];
+#
+# -- check if second argument, check argument ---------------------------------
+#
+if [[ $2 ]];
 then
-    ENV=$2
-else
-    echo -e "\n  ERROR : wrong parameter $2 !\n"
-    exit 1
+    if [[ $2 == "Tests" || $2 == "Release" || $2 == "Dev" ]];
+    then
+        ENV=$2
+    else
+        echo -e "\n  ERROR : wrong parameter $2 !\n"
+        exit 1
+    fi
 fi
+
+
 
 
 # -----------------------------------------------------------------------------
