@@ -1,5 +1,19 @@
 #!/bin/bash
 
+#
+# -- get and cd in script dir for config sourcing
+#
+
+# -- Absolute path to this script
+SCRIPT=$(readlink -f "$0")
+
+# -- Absolute path to script dir
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+# -- cd to script dir for config sourcing
+cd $SCRIPTPATH
+
+
 # -----------------------------------------------------------------------------
 # -- CONFIGURATION
 # -----------------------------------------------------------------------------
