@@ -44,7 +44,8 @@ OPTIONS=false
 
 
 #
-# .-- handle options
+# .-- handle options ----------------------------------------------------------
+#
 #       -h : show help and usage
 #       -p : project name
 #       -l : list testsuites for a given project
@@ -120,7 +121,7 @@ fi
 cd $PROJECTPATH/htdocs
 
 #
-# -- handle list action
+# -- handle list action -------------------------------------------------------
 #
 if [[ $LIST == "true" ]]; then
 
@@ -154,7 +155,7 @@ fi
 
 
 #
-# -- run tests
+# -- run tests ----------------------------------------------------------------
 #
 
 # -- if testsuite append to command
